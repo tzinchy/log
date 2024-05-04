@@ -30,7 +30,10 @@ def loging_user(page: ft.Page):
     def to_registration_window(e):
         registration_user(page)
     #добавляем все необходимые объекты на страницу с входом в аккаунт
-    page.add(ft.SafeArea(ft.Row([ft.Text("СТРАНИЦА С РЕГИСТРАЦИЕЙ")], alignment=ft.MainAxisAlignment.CENTER)))
+    login = ft.TextField(label='Login')
+    password = ft.TextField(label='Password')
+    page.add(ft.SafeArea(ft.Row([ft.Text("РЕГИСТРАЦИЯ")], alignment=ft.MainAxisAlignment.CENTER)))
+    page.add(ft.SafeArea(ft.Row([login, password], alignment=ft.MainAxisAlignment.CENTER)))
     page.add(ft.SafeArea(ft.Row([ft.TextButton('Для прехода на логирование', on_click=to_registration_window)], alignment=ft.MainAxisAlignment.CENTER)))
     page.update()
 
@@ -51,4 +54,4 @@ def chooser(page: ft.Page):
     page.update()
 
 if __name__ == '__main__':
-    ft.app(chooser)
+    ft.app(chooser, view = ft.WEB_BROWSER)
