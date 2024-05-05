@@ -74,5 +74,56 @@ class Db_func:
             return data
         except:
             print('lose')
-    def new_expenses
-
+    @classmethod
+    def new_expenses(self, user_id, category_id, price, p_date):
+        try:
+            user = mysql.connector.connect(
+                user='root',
+                password='',
+                host='localhost',
+                database='bunk'
+            )
+            curr = user.cursor()
+            curr.callproc('create_new_expenses', [user_id, category_id, price, p_date])
+            user.commit()
+            user.close()
+        except:
+            print('lose')
+    @classmethod
+    def balance(self, users_id):
+        try:
+            user = mysql.connector.connect(
+                user='root',
+                password='',
+                host='localhost',
+                database='bunk'
+            )
+            curr = user.cursor()
+            query = f'SELECT balance FROM total_result WHERE user_id = %s'
+            curr.execute(query, [users_id])
+            data = curr.fetchall()[0][0]
+            print(data)
+            user.commit()
+            user.close()
+            return data
+        except:
+            print('lose')
+    @classmethod
+    def list_of_expenses(self, userr_id):
+        try:
+            user = mysql.connector.connect(
+                user='root',
+                password='',
+                host='localhost',
+                database='bunk'
+            )
+            curr = user.cursor()
+            curr.callproc('expenes_list', [userr_id])
+            stored_result = curr.stored_results()
+            reply = next(stored_result)
+            data = reply.fetchall()
+            user.commit()
+            user.close()
+            return data
+        except:
+            print('lose')

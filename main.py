@@ -12,24 +12,87 @@ def admin_page(page: ft.Page):
     page.add(ft.SafeArea(ft.Row([ft.Text('admin cabinet')], alignment=ft.MainAxisAlignment.CENTER)))
 
 def user_page(page: ft.Page, user_id):
-    print(user_id)
     page.clean()
     page.theme_mode = 'dark'
     page.vertical_alignment = 'center'
     page.horizontal_alignment = 'center'
     page.title = 'bunk.app'
     page.add(ft.Row([ft.Text("Personal cabinet")], alignment=ft.MainAxisAlignment.CENTER))
+    balance = Db_func.balance(user_id)
+    balance_text = ft.TextField(value=balance, read_only=True, label='balance')
+    page.update()
+    list_expenses = [str(i) for i in Db_func.list_of_expenses(user_id)]
+    def close_anchor(e):
+        text = f"Трата выбрана"
+        print(f"closing view from {text}")
+        anchor.close_view(text)
+    def handle_change(e):
+        print(f"handle_change e.data: {e.data}")
+
+    def handle_submit(e):
+        print(f"handle_submit e.data: {e.data}")
+    def handle_tap(e):
+        print(f"handle_tap")
+
+    anchor_controls = [
+        ft.ListTile(title=ft.Text(str(i)), on_click=close_anchor, data=i[0])
+        for i in list_expenses
+    ]
+
+    anchor = ft.SearchBar(
+        view_elevation=4,
+        divider_color=ft.colors.AMBER,
+        bar_hint_text="Find your expenses",
+        view_hint_text="Choose expenses",
+        on_change=handle_change,
+        on_submit=handle_submit,
+        on_tap=handle_tap,
+        controls=anchor_controls,
+        width=200
+    )
+
+    # Создаем кнопку
+    open_list_button = ft.OutlinedButton("Open list expenses", on_click=lambda _: anchor.open_view())
+
+    # Создаем Row и добавляем в него кнопку и SearchBar (anchor)
+    controls_row = ft.Row(
+        alignment=ft.MainAxisAlignment.START,
+        controls=[
+            open_list_button,
+            anchor,  # Добавляем SearchBar справа от кнопки
+        ],
+    )
+
+    page.add(controls_row)
+
     def printer(e):
-        print(data.value)
-        print(f"{str(date_picker.value).split()[0]} {time_picker.value}")
-        print(price.value)
+        nonlocal balance, balance_text
+        if(int(price.value)<=int(balance)):
+            date_of_expenses = f"{str(date_picker.value).split()[0]} {time_picker.value}"
+            Db_func.new_expenses(user_id,category.value, price.value, date_of_expenses)
+            balance = Db_func.balance(user_id)
+            balance_text.value = balance
+
+            res = ft.AlertDialog(title=ft.Text(f"ТРАНЗАКЦИЯ ПРОШЛА УСПЕШНО"),
+                                 on_dismiss=lambda e: print("error"))
+            page.dialog = res
+            res.open = True
+            page.update()
+
+        else:
+            page.update()
+            res = ft.AlertDialog(title=ft.Text(f"ТРАНЗАКЦИЯ ОТКЛОНЕНА"),
+                                 on_dismiss=lambda e: print("error"))
+            page.dialog = res
+            res.open = True
+            page.update()
 
     btn = ft.ElevatedButton(text="SUBMIT", on_click=printer, width=400)
     price = ft.TextField(label='Сумма', width=400)
     first, second, third = Db_func.categor()
-    data = ft.Dropdown(width=100, options=[ft.dropdown.Option(key=first[0], text=f"{first[1]}"),
+    category = ft.Dropdown(width=100, options=[ft.dropdown.Option(key=first[0], text=f"{first[1]}"),
                                            ft.dropdown.Option(key=second[0], text=f"{second[1]}"),
-                                           ft.dropdown.Option(key=second[0], text=f"{third[1]}")])
+                                           ft.dropdown.Option(key=third[0], text=f"{third[1]}")])
 
     time_picker = ft.TimePicker(
         confirm_text="Confirm",
@@ -56,10 +119,11 @@ def user_page(page: ft.Page, user_id):
         icon=ft.icons.CALENDAR_MONTH,
         on_click=lambda _: date_picker.pick_date(),
     )
-
+    page.add(ft.SafeArea(ft.Row([balance_text], alignment=ft.MainAxisAlignment.END)))
     page.add(ft.SafeArea(ft.Row([price], alignment=ft.MainAxisAlignment.END)))
-    page.add(ft.SafeArea(ft.Row([data, time_button, date_button], alignment=ft.MainAxisAlignment.END)))
+    page.add(ft.SafeArea(ft.Row([category,time_button, date_button], alignment=ft.MainAxisAlignment.END)))
     page.add(ft.SafeArea(ft.Row([btn], alignment=ft.MainAxisAlignment.END)))
+    page.update()
 
 def to_loging_user(page: ft.Page):
     page.clean()
@@ -143,7 +207,6 @@ def registration_user(page: ft.Page):
     page.add(ft.SafeArea(ft.Row([ft.TextButton('Have a account? - login', on_click=to_log_window)], alignment=ft.MainAxisAlignment.CENTER)))
     page.update()
 
-
 def chooser(page: ft.Page):
     page.clean()
     page.theme_mode = 'dark'
@@ -167,7 +230,6 @@ def chooser(page: ft.Page):
     to_log = ft.TextButton('Login', on_click=to_logging_user, width= 175)
     page.add(ft.SafeArea(ft.Row([to_reg, to_log], alignment=ft.MainAxisAlignment.CENTER)))
     page.update()
-
 
 if __name__ == '__main__':
     ft.app(chooser)
