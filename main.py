@@ -1,7 +1,15 @@
 import flet as ft
+import matplotlib
+matplotlib.use('Agg')  # Устанавливаем бэкенд, который не требует оконного сервера
 import mysql.connector
 from log import Db_func
 import datetime
+from decimal import Decimal
+import plotly.graph_objs as go
+import plotly.io as pio
+from collections import defaultdict
+import datetime
+import matplotlib.pyplot as plt
 
 def admin_page(page: ft.Page):
     page.clean()
@@ -17,11 +25,41 @@ def user_page(page: ft.Page, user_id):
     page.vertical_alignment = 'center'
     page.horizontal_alignment = 'center'
     page.title = 'bunk.app'
-    page.add(ft.Row([ft.Text("Personal cabinet")], alignment=ft.MainAxisAlignment.CENTER))
+    page.add(ft.Row([ft.Text("Personal cabinet", theme_style=ft.TextThemeStyle.HEADLINE_SMALL)], alignment=ft.MainAxisAlignment.CENTER))
     balance = Db_func.balance(user_id)
     balance_text = ft.TextField(value=balance, read_only=True, label='balance')
     page.update()
+    diagrams = Db_func.list_of_expenses(user_id)
     list_expenses = [str(i) for i in Db_func.list_of_expenses(user_id)]
+
+    def save_pie_chart(diagrams, filename="pie_chart.png"):
+        category_sums = defaultdict(Decimal)
+        for category, amount, _ in diagrams:
+            category_sums[category] += amount
+        categories = list(category_sums.keys())
+        sums = list(category_sums.values())
+
+        plt.figure(figsize=(10, 6))
+        plt.pie(sums, labels=categories, autopct='%1.1f%%', startangle=140)
+        plt.title('Распределение трат по категориям')
+        plt.savefig(filename)
+        plt.close()
+
+    def save_bar_chart(diagrams, filename="bar_chart.png"):
+        category_sums = defaultdict(Decimal)
+        for category, amount, _ in diagrams:
+            category_sums[category] += amount
+        categories = list(category_sums.keys())
+        sums = list(category_sums.values())
+
+        plt.figure(figsize=(10, 6))
+        plt.bar(categories, sums, color='skyblue')
+        plt.title('Распределение трат по категориям')
+        plt.xlabel('Категории')
+        plt.ylabel('Суммы')
+        plt.savefig(filename)
+        plt.close()
+
     def close_anchor(e):
         text = f"Трата выбрана"
         print(f"closing view from {text}")
@@ -62,8 +100,6 @@ def user_page(page: ft.Page, user_id):
             anchor,  # Добавляем SearchBar справа от кнопки
         ],
     )
-
-    page.add(controls_row)
 
     def printer(e):
         nonlocal balance, balance_text
@@ -113,16 +149,43 @@ def user_page(page: ft.Page, user_id):
     )
 
     page.overlay.append(date_picker)
-
+    graphics = ft.Dropdown(width=100, options=[ft.dropdown.Option(key='bar', text=f"round diagram"),
+                                           ft.dropdown.Option(key='plot', text=f"plot diagram")])
     date_button = ft.ElevatedButton(
         "Pick date",
         icon=ft.icons.CALENDAR_MONTH,
         on_click=lambda _: date_picker.pick_date(),
     )
+    img1 = ft.Image(
+        src=f"bar_chart.png",
+        width=300,
+        height=200,
+        fit=ft.ImageFit.CONTAIN,
+    )
+    img2 = ft.Image(
+        src=f"pie_chart.png",
+        width=300,
+        height=200,
+        fit=ft.ImageFit.CONTAIN,
+    )
+    def create_graph(e):
+        res = ft.AlertDialog(title=ft.Text(f"РЕЗУЛЬТАТ СОХРАНЕН"),
+                             on_dismiss=lambda e: print("error"))
+        page.dialog = res
+        res.open = True
+        page.update()
+        if 'bar' in str(graphics.value):
+            save_bar_chart(diagrams)
+        elif 'plot' in str(graphics.value):
+            save_pie_chart(diagrams)
+
+    page.add(ft.SafeArea(ft.Row([controls_row, img1, img2, ft.Text("Example of diagrams")], alignment=ft.MainAxisAlignment.START)))
+    page.add(ft.SafeArea(ft.Row([graphics,ft.TextButton("Для построения графика", on_click=create_graph)], alignment=ft.MainAxisAlignment.START)))
     page.add(ft.SafeArea(ft.Row([balance_text], alignment=ft.MainAxisAlignment.END)))
     page.add(ft.SafeArea(ft.Row([price], alignment=ft.MainAxisAlignment.END)))
     page.add(ft.SafeArea(ft.Row([category,time_button, date_button], alignment=ft.MainAxisAlignment.END)))
     page.add(ft.SafeArea(ft.Row([btn], alignment=ft.MainAxisAlignment.END)))
+
     page.update()
 
 def to_loging_user(page: ft.Page):
