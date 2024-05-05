@@ -1,28 +1,72 @@
 import flet as ft
 import mysql.connector
 from log import Db_func
+import datetime
 
 def admin_page(page: ft.Page):
     page.clean()
     page.theme_mode = 'dark'
     page.vertical_alignment = 'center'
     page.horizontal_alignment = 'center'
+    page.title = 'bunk.app'
     page.add(ft.SafeArea(ft.Row([ft.Text('admin cabinet')], alignment=ft.MainAxisAlignment.CENTER)))
 
-
-def user_page(page: ft.Page):
+def user_page(page: ft.Page, user_id):
+    print(user_id)
     page.clean()
     page.theme_mode = 'dark'
     page.vertical_alignment = 'center'
     page.horizontal_alignment = 'center'
+    page.title = 'bunk.app'
     page.add(ft.Row([ft.Text("Personal cabinet")], alignment=ft.MainAxisAlignment.CENTER))
+    def printer(e):
+        print(data.value)
+        print(f"{str(date_picker.value).split()[0]} {time_picker.value}")
+        print(price.value)
 
+    btn = ft.ElevatedButton(text="SUBMIT", on_click=printer, width=400)
+    price = ft.TextField(label='Сумма', width=400)
+    first, second, third = Db_func.categor()
+    data = ft.Dropdown(width=100, options=[ft.dropdown.Option(key=first[0], text=f"{first[1]}"),
+                                           ft.dropdown.Option(key=second[0], text=f"{second[1]}"),
+                                           ft.dropdown.Option(key=second[0], text=f"{third[1]}")])
+
+    time_picker = ft.TimePicker(
+        confirm_text="Confirm",
+        error_invalid_text="Time out of range",
+        help_text="Pick your time slot",
+    )
+
+    page.overlay.append(time_picker)
+
+    time_button = ft.ElevatedButton(
+        "Pick time",
+        icon=ft.icons.TIMELAPSE,
+        on_click=lambda _: time_picker.pick_time(),
+    )
+    date_picker = ft.DatePicker(
+        first_date=datetime.datetime(2023, 10, 1),
+        last_date=datetime.datetime(2024, 10, 1),
+    )
+
+    page.overlay.append(date_picker)
+
+    date_button = ft.ElevatedButton(
+        "Pick date",
+        icon=ft.icons.CALENDAR_MONTH,
+        on_click=lambda _: date_picker.pick_date(),
+    )
+
+    page.add(ft.SafeArea(ft.Row([price], alignment=ft.MainAxisAlignment.END)))
+    page.add(ft.SafeArea(ft.Row([data, time_button, date_button], alignment=ft.MainAxisAlignment.END)))
+    page.add(ft.SafeArea(ft.Row([btn], alignment=ft.MainAxisAlignment.END)))
 
 def to_loging_user(page: ft.Page):
     page.clean()
     page.theme_mode = 'dark'
     page.vertical_alignment = 'center'
     page.horizontal_alignment = 'center'
+    page.title = 'bunk.app'
 
     def finder(e):
         reply = Db_func.try_to_find_user(login.value, password.value)
@@ -30,14 +74,25 @@ def to_loging_user(page: ft.Page):
             admin_page(page)
         else:
             if reply == 'user exist':
-                user_page(page)
-
+                id = Db_func.user_id(login.value, password.value)
+                user_page(page, id)
             else:
-                res = ft.Banner(bgcolor=ft.colors.AMBER_100,
-                                leading=ft.Icon(ft.icons.WARNING_AMBER_ROUNDED, color=ft.colors.AMBER, size=40),
-                                content=ft.Text(f"{reply}"), )
-                page.dialog = res
-                res.open = True
+                def close_banner(e):
+                    page.banner.open = False
+                    page.update()
+
+                page.banner = ft.Banner(
+                    bgcolor=ft.colors.AMBER_700,
+                    leading=ft.Icon(ft.icons.WARNING_AMBER_ROUNDED, color=ft.colors.AMBER_300, size=40),
+                    content=ft.Text(
+                        "Something wrong!?"
+                    ),
+                    actions=[
+                        ft.TextButton("Retry", on_click=close_banner),
+
+                    ],
+                )
+                page.banner.open = True
                 page.update()
 
     # функция для перехода в окно логина
@@ -60,6 +115,7 @@ def registration_user(page: ft.Page):
     page.theme_mode = 'dark'
     page.vertical_alignment = 'center'
     page.horizontal_alignment = 'center'
+    page.title = 'bunk.app'
 
     # функция для перехода в окно регистрации
     def regist(e):
@@ -93,16 +149,22 @@ def chooser(page: ft.Page):
     page.theme_mode = 'dark'
     page.vertical_alignment = 'center'
     page.horizontal_alignment = 'center'
-
+    page.title = 'bunk.app'
+    img = ft.Image(
+        src=f"topburch3.png",
+        width=500,
+        height=200,
+        fit=ft.ImageFit.CONTAIN,
+    )
     def to_logging_user(e):
         to_loging_user(page)
 
     def to_registrate_user(e):
         registration_user(page)
-
+    page.add(img)
     # переменные для действитя пользователя
-    to_reg = ft.TextButton('Registration', on_click=to_registrate_user)
-    to_log = ft.TextButton('Login', on_click=to_logging_user)
+    to_reg = ft.TextButton('Registration', on_click=to_registrate_user, width= 175)
+    to_log = ft.TextButton('Login', on_click=to_logging_user, width= 175)
     page.add(ft.SafeArea(ft.Row([to_reg, to_log], alignment=ft.MainAxisAlignment.CENTER)))
     page.update()
 

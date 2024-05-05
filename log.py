@@ -39,3 +39,40 @@ class Db_func:
             return data
         except:
             print('lose')
+    @classmethod
+    def categor(self):
+        try:
+            user = mysql.connector.connect(
+                user='root',
+                password='',
+                host='localhost',
+                database='bunk'
+            )
+            curr = user.cursor()
+            curr.execute('SELECT * FROM category')
+            data = curr.fetchall()
+            user.commit()
+            user.close()
+            return data
+        except:
+            print('lose')
+    @classmethod
+    def user_id(self, login, password):
+        try:
+            user = mysql.connector.connect(
+                user='root',
+                password='',
+                host='localhost',
+                database='bunk'
+            )
+            curr = user.cursor()
+            query = f'SELECT id FROM user WHERE login = %s AND password = %s'
+            curr.execute(query, (login, password))
+            data = curr.fetchall()[0][0]
+            user.commit()
+            user.close()
+            return data
+        except:
+            print('lose')
+    def new_expenses
+
