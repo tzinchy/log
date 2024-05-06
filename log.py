@@ -127,3 +127,41 @@ class Db_func:
             return data
         except:
             print('lose')
+    @classmethod
+    def admin_data_months(self):
+        try:
+            user = mysql.connector.connect(
+                user='root',
+                password='',
+                host='localhost',
+                database='bunk'
+            )
+            curr = user.cursor()
+            curr.callproc('data_month')
+            stored_result = curr.stored_results()
+            reply = next(stored_result)
+            data = reply.fetchall()
+            user.commit()
+            user.close()
+            return data
+        except:
+            print('lose')
+    @classmethod
+    def admin_data_by_categorys(self):
+        try:
+            user = mysql.connector.connect(
+                user='root',
+                password='',
+                host='localhost',
+                database='bunk'
+            )
+            curr = user.cursor()
+            curr.callproc('admin_data_categor')
+            stored_result = curr.stored_results()
+            reply = next(stored_result)
+            data = reply.fetchall()
+            user.commit()
+            user.close()
+            return data
+        except:
+            print('lose')

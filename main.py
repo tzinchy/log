@@ -1,5 +1,6 @@
 import flet as ft
 import matplotlib
+
 matplotlib.use('Agg')  # Устанавливаем бэкенд, который не требует оконного сервера
 import mysql.connector
 from log import Db_func
@@ -11,6 +12,7 @@ from collections import defaultdict
 import datetime
 import matplotlib.pyplot as plt
 
+
 def admin_page(page: ft.Page):
     page.clean()
     page.theme_mode = 'dark'
@@ -18,6 +20,56 @@ def admin_page(page: ft.Page):
     page.horizontal_alignment = 'center'
     page.title = 'bunk.app'
     page.add(ft.SafeArea(ft.Row([ft.Text('admin cabinet')], alignment=ft.MainAxisAlignment.CENTER)))
+    data_about_cat = Db_func.admin_data_by_categorys()
+    data_about_months = Db_func.admin_data_months()
+
+    def visualize_expenses_by_category(e):
+        nonlocal data_about_cat  # Используем nonlocal, чтобы ссылаться на внешнюю переменную
+
+        # Извлечение данных
+        categories = [item[0] for item in data_about_cat]
+        amounts = [float(item[1]) for item in data_about_cat]
+
+        # Создание круговой диаграммы
+        plt.figure(figsize=(8, 8))
+        plt.pie(amounts, labels=categories, autopct='%1.1f%%', startangle=90)
+        plt.title('Распределение трат по категориям')
+
+        # Сохранение диаграммы в файл
+        plt.savefig('pie_chart_admin.png')
+        plt.close()  # Закрыть фигуру после сохранения
+
+        # Отображение диалогового окна с помощью вашего фреймворка
+        res = ft.AlertDialog(title=ft.Text(f"График успешно сохранен"),
+                             on_dismiss=lambda e: print("error"))
+        page.dialog = res  # Замените 'page' на ваш контекст страницы
+        res.open = True
+        page.update()  # Обновите страницу или контекст, чтобы обновления отобразились
+
+    def for_visualisation_cat(e):
+        nonlocal data_about_cat
+        # Извлечение данных
+        categories = [item[0] for item in data_about_cat]
+        amounts = [float(item[1]) for item in data_about_cat]
+
+        # Создание круговой диаграммы
+        plt.figure(figsize=(8, 8))
+        plt.pie(amounts, labels=categories, autopct='%1.1f%%', startangle=90)
+        plt.title('Распределение трат по категориям')
+
+        # Сохранение диаграммы в файл
+        plt.savefig('pie_chart_admin.png')
+        plt.close()  # Закрыть фигуру после сохранения
+        res = ft.AlertDialog(title=ft.Text(f"График успешно сохранен"),
+                             on_dismiss=lambda e: print("error"))
+        page.dialog = res
+        res.open = True
+        page.update()
+
+
+    page.add(ft.SafeArea(ft.TextButton('Для построения графкиа по категориям', on_click=for_visualisation_cat)))
+    page.add(ft.SafeArea(ft.TextButton('Для построения графкиа по месяцам', on_click=visualize_expenses_by_category)))
+
 
 def user_page(page: ft.Page, user_id):
     page.clean()
@@ -25,7 +77,8 @@ def user_page(page: ft.Page, user_id):
     page.vertical_alignment = 'center'
     page.horizontal_alignment = 'center'
     page.title = 'bunk.app'
-    page.add(ft.Row([ft.Text("Personal cabinet", theme_style=ft.TextThemeStyle.HEADLINE_SMALL)], alignment=ft.MainAxisAlignment.CENTER))
+    page.add(ft.Row([ft.Text("Personal cabinet", theme_style=ft.TextThemeStyle.HEADLINE_SMALL)],
+                    alignment=ft.MainAxisAlignment.CENTER))
     balance = Db_func.balance(user_id)
     balance_text = ft.TextField(value=balance, read_only=True, label='balance')
     page.update()
@@ -64,11 +117,13 @@ def user_page(page: ft.Page, user_id):
         text = f"Трата выбрана"
         print(f"closing view from {text}")
         anchor.close_view(text)
+
     def handle_change(e):
         print(f"handle_change e.data: {e.data}")
 
     def handle_submit(e):
         print(f"handle_submit e.data: {e.data}")
+
     def handle_tap(e):
         print(f"handle_tap")
 
@@ -103,9 +158,9 @@ def user_page(page: ft.Page, user_id):
 
     def printer(e):
         nonlocal balance, balance_text
-        if(int(price.value)<=int(balance)):
+        if (int(price.value) <= int(balance)):
             date_of_expenses = f"{str(date_picker.value).split()[0]} {time_picker.value}"
-            Db_func.new_expenses(user_id,category.value, price.value, date_of_expenses)
+            Db_func.new_expenses(user_id, category.value, price.value, date_of_expenses)
             balance = Db_func.balance(user_id)
             balance_text.value = balance
 
@@ -127,8 +182,8 @@ def user_page(page: ft.Page, user_id):
     price = ft.TextField(label='Сумма', width=400)
     first, second, third = Db_func.categor()
     category = ft.Dropdown(width=100, options=[ft.dropdown.Option(key=first[0], text=f"{first[1]}"),
-                                           ft.dropdown.Option(key=second[0], text=f"{second[1]}"),
-                                           ft.dropdown.Option(key=third[0], text=f"{third[1]}")])
+                                               ft.dropdown.Option(key=second[0], text=f"{second[1]}"),
+                                               ft.dropdown.Option(key=third[0], text=f"{third[1]}")])
 
     time_picker = ft.TimePicker(
         confirm_text="Confirm",
@@ -150,7 +205,7 @@ def user_page(page: ft.Page, user_id):
 
     page.overlay.append(date_picker)
     graphics = ft.Dropdown(width=100, options=[ft.dropdown.Option(key='bar', text=f"round diagram"),
-                                           ft.dropdown.Option(key='plot', text=f"plot diagram")])
+                                               ft.dropdown.Option(key='plot', text=f"plot diagram")])
     date_button = ft.ElevatedButton(
         "Pick date",
         icon=ft.icons.CALENDAR_MONTH,
@@ -168,6 +223,7 @@ def user_page(page: ft.Page, user_id):
         height=200,
         fit=ft.ImageFit.CONTAIN,
     )
+
     def create_graph(e):
         res = ft.AlertDialog(title=ft.Text(f"РЕЗУЛЬТАТ СОХРАНЕН"),
                              on_dismiss=lambda e: print("error"))
@@ -179,14 +235,17 @@ def user_page(page: ft.Page, user_id):
         elif 'plot' in str(graphics.value):
             save_pie_chart(diagrams)
 
-    page.add(ft.SafeArea(ft.Row([controls_row, img1, img2, ft.Text("Example of diagrams")], alignment=ft.MainAxisAlignment.START)))
-    page.add(ft.SafeArea(ft.Row([graphics,ft.TextButton("Для построения графика", on_click=create_graph)], alignment=ft.MainAxisAlignment.START)))
+    page.add(ft.SafeArea(
+        ft.Row([controls_row, img1, img2, ft.Text("Example of diagrams")], alignment=ft.MainAxisAlignment.START)))
+    page.add(ft.SafeArea(ft.Row([graphics, ft.TextButton("Для построения графика", on_click=create_graph)],
+                                alignment=ft.MainAxisAlignment.START)))
     page.add(ft.SafeArea(ft.Row([balance_text], alignment=ft.MainAxisAlignment.END)))
     page.add(ft.SafeArea(ft.Row([price], alignment=ft.MainAxisAlignment.END)))
-    page.add(ft.SafeArea(ft.Row([category,time_button, date_button], alignment=ft.MainAxisAlignment.END)))
+    page.add(ft.SafeArea(ft.Row([category, time_button, date_button], alignment=ft.MainAxisAlignment.END)))
     page.add(ft.SafeArea(ft.Row([btn], alignment=ft.MainAxisAlignment.END)))
 
     page.update()
+
 
 def to_loging_user(page: ft.Page):
     page.clean()
@@ -231,7 +290,8 @@ def to_loging_user(page: ft.Page):
     password = ft.TextField(label='Password', password=True, can_reveal_password=True)
     page.add(ft.SafeArea(ft.Row([ft.Text("Login to app")], alignment=ft.MainAxisAlignment.CENTER)))
     page.add(ft.SafeArea(ft.Row([login, password], alignment=ft.MainAxisAlignment.CENTER)))
-    page.add(ft.SafeArea(ft.Row([ft.IconButton(icon=ft.icons.DONE, icon_color="blue400", icon_size=20, tooltip="Done", on_click=finder, width=600)], alignment=ft.MainAxisAlignment.CENTER)))
+    page.add(ft.SafeArea(ft.Row([ft.IconButton(icon=ft.icons.DONE, icon_color="blue400", icon_size=20, tooltip="Done",
+                                               on_click=finder, width=600)], alignment=ft.MainAxisAlignment.CENTER)))
     page.add(ft.SafeArea(
         ft.Row([ft.TextButton('Registration', on_click=to_reg_window)], alignment=ft.MainAxisAlignment.CENTER)))
     page.update()
@@ -253,7 +313,8 @@ def registration_user(page: ft.Page):
             res.open = True
             page.update()
         else:
-            res = ft.AlertDialog(title=ft.Text(f"ERROR YOUR ACCOUNT DOESNT CREATED\n{reply}"), on_dismiss=lambda e: print("error"))
+            res = ft.AlertDialog(title=ft.Text(f"ERROR YOUR ACCOUNT DOESNT CREATED\n{reply}"),
+                                 on_dismiss=lambda e: print("error"))
             page.dialog = res
             res.open = True
             page.update()
@@ -265,10 +326,14 @@ def registration_user(page: ft.Page):
     login_to_registration = ft.TextField(label='Login')
     password_to_registration = ft.TextField(label='Password', password=True, can_reveal_password=True)
     page.add(ft.SafeArea(ft.Row([ft.Text("Registration")], alignment=ft.MainAxisAlignment.CENTER)))
-    page.add(ft.SafeArea(ft.Row([login_to_registration, password_to_registration], alignment=ft.MainAxisAlignment.CENTER)))
-    page.add(ft.SafeArea(ft.Row([ft.TextButton('Registration', on_click=regist)], alignment=ft.MainAxisAlignment.CENTER)))
-    page.add(ft.SafeArea(ft.Row([ft.TextButton('Have a account? - login', on_click=to_log_window)], alignment=ft.MainAxisAlignment.CENTER)))
+    page.add(
+        ft.SafeArea(ft.Row([login_to_registration, password_to_registration], alignment=ft.MainAxisAlignment.CENTER)))
+    page.add(
+        ft.SafeArea(ft.Row([ft.TextButton('Registration', on_click=regist)], alignment=ft.MainAxisAlignment.CENTER)))
+    page.add(ft.SafeArea(ft.Row([ft.TextButton('Have a account? - login', on_click=to_log_window)],
+                                alignment=ft.MainAxisAlignment.CENTER)))
     page.update()
+
 
 def chooser(page: ft.Page):
     page.clean()
@@ -282,17 +347,20 @@ def chooser(page: ft.Page):
         height=200,
         fit=ft.ImageFit.CONTAIN,
     )
+
     def to_logging_user(e):
         to_loging_user(page)
 
     def to_registrate_user(e):
         registration_user(page)
+
     page.add(img)
     # переменные для действитя пользователя
-    to_reg = ft.TextButton('Registration', on_click=to_registrate_user, width= 175)
-    to_log = ft.TextButton('Login', on_click=to_logging_user, width= 175)
+    to_reg = ft.TextButton('Registration', on_click=to_registrate_user, width=175)
+    to_log = ft.TextButton('Login', on_click=to_logging_user, width=175)
     page.add(ft.SafeArea(ft.Row([to_reg, to_log], alignment=ft.MainAxisAlignment.CENTER)))
     page.update()
+
 
 if __name__ == '__main__':
     ft.app(chooser)
