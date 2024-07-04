@@ -1,3 +1,35 @@
+--renovation.apartments_old_sorted
+ SELECT apartments_old.id,
+    apartments_old.building_id,
+    apartments_old.unkv,
+    apartments_old.cad_num,
+    apartments_old.apart_num,
+    apartments_old.apart_type,
+    apartments_old.floor,
+    apartments_old.area,
+    apartments_old.room_count,
+    apartments_old.fio,
+    apartments_old.people_count,
+    apartments_old.requirement,
+    apartments_old.old_apart_status,
+    apartments_old.rd_num,
+    apartments_old.rd_date,
+    apartments_old.new_apart_unom,
+    apartments_old.new_apart_adress,
+    apartments_old.new_apart_num,
+    apartments_old.new_apart_room_count,
+    apartments_old.new_apart_area,
+    apartments_old.new_apart_contract_status,
+    apartments_old.new_apart_contract_date,
+    apartments_old.notes,
+    apartments_old.affair_id,
+    apartments_old.kpu_num,
+    apartments_old.status,
+    apartments_old.new_status
+   FROM renovation.apartments_old
+  ORDER BY apartments_old.building_id, (COALESCE("substring"(apartments_old.apart_num::text, '\d+'::text), '0'::text)::integer), apartments_old.id;
+
+--renovation.old_apartments_and_buildings
  WITH apartments_old_sorted AS (
          SELECT apartments_old.id,
             apartments_old.building_id,
@@ -23,7 +55,8 @@
             apartments_old.notes,
             apartments_old.affair_id,
             apartments_old.kpu_num,
-            apartments_old.status
+            apartments_old.status,
+            apartments_old.new_status
            FROM renovation.apartments_old
           ORDER BY apartments_old.building_id, (COALESCE("substring"(apartments_old.apart_num::text, '\d+'::text), '0'::text)::integer), apartments_old.id
         ), buildings_old_full_view AS (
@@ -94,6 +127,7 @@
     aos.affair_id,
     aos.kpu_num,
     aos.status,
+    aos.new_status,
     bofv.buildings_old_id,
     bofv.unom,
     bofv.okrug,
