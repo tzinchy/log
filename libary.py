@@ -3,7 +3,6 @@
     apartments_old.building_id,
     apartments_old.unkv,
     apartments_old.cad_num,
-    apartments_old.apart_num,
     apartments_old.apart_type,
     apartments_old.floor,
     apartments_old.area,
@@ -12,21 +11,13 @@
     apartments_old.people_count,
     apartments_old.requirement,
     apartments_old.old_apart_status,
-    apartments_old.rd_num,
-    apartments_old.rd_date,
-    apartments_old.new_apart_unom,
-    apartments_old.new_apart_adress,
-    apartments_old.new_apart_num,
-    apartments_old.new_apart_room_count,
-    apartments_old.new_apart_area,
-    apartments_old.new_apart_contract_status,
-    apartments_old.new_apart_contract_date,
     apartments_old.notes,
     apartments_old.affair_id,
     apartments_old.kpu_num,
-    apartments_old.status,
-    apartments_old.new_status
+    orders.rd_number,
+    orders.rd_date
    FROM renovation.apartments_old
+     LEFT JOIN renovation.orders USING (affair_id)
   ORDER BY apartments_old.building_id, (COALESCE("substring"(apartments_old.apart_num::text, '\d+'::text), '0'::text)::integer), apartments_old.id;
 
 --renovation.old_apartments_and_buildings
