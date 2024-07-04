@@ -164,3 +164,46 @@
         END AS "time"
    FROM apartments_old_sorted aos
      LEFT JOIN buildings_old_full_view bofv ON aos.building_id = bofv.buildings_old_id;
+
+--renovation.buildings_old_full_view
+ SELECT o.id,
+    o.unom,
+    o.okrug,
+    o.district,
+    o.adress,
+    o.terms_reason,
+    t.type,
+    d.latest_type AS latest_step,
+    d.plan_first_resettlement_start,
+    d.plan_first_resettlement_end,
+    d.plan_second_resettlement_end,
+    d.plan_demolition_end,
+    d.actual_first_resettlement_start,
+    d.actual_first_resettlement_end,
+    d.actual_second_resettlement_end,
+    d.actual_demolition_end,
+    nc.new_building_ids,
+    nc.new_buildings,
+    nm.new_building_ids AS moves_to_ids,
+    nm.new_buildings AS moves_to,
+    COALESCE(at.total, 0::bigint) AS total,
+    COALESCE(at.moved, 0::bigint) AS moved,
+    COALESCE(at.project, 0::bigint) AS project,
+    COALESCE(at.rd, 0::bigint) AS rd,
+    COALESCE(at.in_progress, 0::bigint) AS in_progress,
+    COALESCE(at.empty, 0::bigint) AS empty
+   FROM renovation.buildings_old o
+     LEFT JOIN renovation.dates_buildings_old_flat d ON d.building_id = o.id
+     LEFT JOIN renovation.buildings_new_flat_construction nc ON nc.old_building_id = o.id
+     LEFT JOIN renovation.buildings_new_flat_movement nm ON nm.old_building_id = o.id
+     LEFT JOIN renovation.relocation_types t ON t.id = o.relocation_type
+     LEFT JOIN ( SELECT apartments_old.building_id,
+            count(*) AS total,
+            count(*) FILTER (WHERE apartments_old.status::text = 'Переселён'::text) AS moved,
+            count(*) FILTER (WHERE apartments_old.status::text = 'Проект договора'::text) AS project,
+            count(*) FILTER (WHERE apartments_old.status::text = 'Распоряжение'::text) AS rd,
+            count(*) FILTER (WHERE apartments_old.status::text = 'В работе'::text) AS in_progress,
+            count(*) FILTER (WHERE apartments_old.status::text = 'Не требуется'::text) AS empty
+           FROM renovation.apartments_old
+          GROUP BY apartments_old.building_id) at ON at.building_id = o.id
+  ORDER BY o.okrug, o.district, o.adress;
